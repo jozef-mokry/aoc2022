@@ -51,6 +51,7 @@ const MAX_TIME: usize = 32;
 fn evaluate_blueprint(blueprint: &[[isize; 4]; 4]) -> usize {
     // use std::collections::VecDeque;
     const GEODES: usize = 3;
+    #[derive(Hash, Eq, PartialEq, Clone)]
     struct State {
         time: usize,
         materials: [isize; 4], //ore, clay, obsidian, geodes
@@ -59,17 +60,25 @@ fn evaluate_blueprint(blueprint: &[[isize; 4]; 4]) -> usize {
     let mut best = 0;
     let mut best_at_least = [0; MAX_TIME + 1];
     let mut best_count = [0; MAX_TIME + 1];
+    let mut memo = std::collections::HashSet::new();
     fn dfs(
-        State {
-            time,
-            materials,
-            robots,
-        }: State,
+        state: State,
         best: &mut isize,
         best_at_least: &mut [isize; MAX_TIME + 1],
         best_count: &mut [isize; MAX_TIME + 1],
         blueprint: &[[isize; 4]; 4],
+        memo: &mut std::collections::HashSet<State>,
     ) -> isize {
+        if memo.contains(&state) {
+            // println!("seen before");
+            return 0;
+        }
+        memo.insert(state.clone());
+        let State {
+            time,
+            materials,
+            robots,
+        } = state;
         if time > MAX_TIME {
             return 0;
         }
@@ -110,6 +119,7 @@ fn evaluate_blueprint(blueprint: &[[isize; 4]; 4]) -> usize {
                     best_at_least,
                     best_count,
                     blueprint,
+                    memo,
                 );
                 ans = ans.max(x);
                 // // TODO: Is this sound optimization?
@@ -132,6 +142,7 @@ fn evaluate_blueprint(blueprint: &[[isize; 4]; 4]) -> usize {
             best_at_least,
             best_count,
             blueprint,
+            memo,
         );
         ans = ans.max(x);
 
@@ -149,6 +160,7 @@ fn evaluate_blueprint(blueprint: &[[isize; 4]; 4]) -> usize {
         &mut best_at_least,
         &mut best_count,
         &blueprint,
+        &mut memo,
     );
     best as usize
 }
